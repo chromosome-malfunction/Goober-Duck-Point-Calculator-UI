@@ -25,7 +25,7 @@ struct PointMaps {
 
 #[derive(Default)]
 struct MyApp {
-    dark_mode: bool,
+    light_mode: bool,
     given: String,
     user: String,
     maps: PointMaps,
@@ -43,22 +43,29 @@ struct MyApp {
     number: String,
     check: String,
     opt: String,
+    points: String,
+    pointsgoober: String,
+    pointsduck: String,
 }
 
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
 
-        if self.dark_mode {
-            ctx.set_visuals(egui::Visuals::dark());
-        } else {
+        if self.light_mode {
             ctx.set_visuals(egui::Visuals::light());
+        } else {
+            ctx.set_visuals(egui::Visuals::dark());
         }
         
         egui::CentralPanel::default().show(ctx, |ui| {
 
             ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
-                ui.checkbox(&mut self.dark_mode, "Dark mode");
+                ui.checkbox(&mut self.light_mode, "light mode");
             });
+
+            /*ui.with_layout(egui::Layout::right_to_left(egui::Align::BOTTOM), |ui| {
+                if ui.button("Close App").clicked() {std::process::exit(0);} else {}
+            });*/
             
             ui.heading("Point calculator");
 
@@ -80,11 +87,12 @@ impl eframe::App for MyApp {
             egui::ComboBox::from_label("")
                 .selected_text(&self.dg)
                 .show_ui(ui, |ui| {
-                    ui.selectable_value(&mut self.dg, "Goober".to_string(), "Goober");
-                    ui.selectable_value(&mut self.dg, "Duck".to_string(), "Duck");
-                    ui.selectable_value(&mut self.dg, "None".to_string(), "None");
+                    ui.selectable_value(&mut self.goober_pop, true, "Goober");
+                    ui.selectable_value(&mut self.duck_pop, true, "Duck");
+                    //ui.selectable_value(&mut self.dg, "None".to_string(), "None");
                 });
-            let points = {
+
+            self.points = {
                 let mut dv: i32 = 0;
                 let mut gv: i32 = 0;
 
@@ -98,20 +106,45 @@ impl eframe::App for MyApp {
                 }
                 format!("{} has {} points in Duck.\n{} has {} points in Goober.", self.user, dv, self.user, gv)
             };
-            ui.label(points);
 
-            self.errs = format!("Errors found: '{}'", self.err);
+            self.pointsgoober = {
+                let mut gv: i32 = 0;
+
+                match self.maps.goobermap.get(&self.user) {
+                    Some(value) => { gv = *value; },
+                    None => {}
+                }
+                format!("{} has {} points in Goober.", self.user, gv)
+            };
+
+            self.pointsduck = {
+                let mut dv: i32 = 0;
+
+                match self.maps.duckmap.get(&self.user) {
+                    Some(value) => { dv = *value; },
+                    None => {}
+                }
+
+                format!("{} has {} points in Duck.", self.user, dv)
+            };
+
+            ui.label(&self.points);
+
+            self.errs = format!("Latest error: '{}'", self.err);
             ui.label(&self.errs);
 
-            if self.dg == "Goober" {
-                self.goober_pop = true;
-                //self.duck_pop = false;
-            } else if self.dg == "Duck" {
-                self.duck_pop = true;
-                //self.goober_pop = false;
-            } else {
+            /*if self.dg == "None" {
                 self.goober_pop = false;
                 self.duck_pop = false;
+            }*/if self.duck_pop && self.goober_pop {
+                self.dg = "Duck & Goober".to_string();
+                //self.goober_pop = false;
+            } else if self.duck_pop && !self.goober_pop {
+                self.dg = "Duck".to_string();
+            } else if self.goober_pop && !self.duck_pop {
+                self.dg = "Goober".to_string();
+            } else {
+                self.dg = "None".to_string();
             }
 
             if self.goober_pop {
@@ -152,7 +185,7 @@ impl eframe::App for MyApp {
                                     let num: i32 = match self.option.trim().parse::<i32>() {
                                         Ok(n) => n,
                                         Err(_) => {
-                                            ui.label("Invalid input; please enter a number.");
+                                            self.err = "Invalid input; please enter a number.".to_string();
                                             return;
                                         }
                                     };
@@ -166,7 +199,7 @@ impl eframe::App for MyApp {
                                         }
                                         None => {
                                             self.err = format!("User '{}' not found; Something went wrong. Exiting...", username);
-                                            ui.label(&self.errs);
+                                            //ui.label(&self.errs);
                                             std::process::exit(-1);
                                         }
                                     }
@@ -183,7 +216,7 @@ impl eframe::App for MyApp {
                                     let num: i32 = match self.option.trim().parse::<i32>() {
                                         Ok(n) => n,
                                         Err(_) => {
-                                            ui.label("Invalid input; please enter a number.");
+                                            self.err = "Invalid input; please enter a number.".to_string();
                                             return;
                                         }
                                     };
@@ -197,7 +230,7 @@ impl eframe::App for MyApp {
                                         }
                                         None => {
                                             self.err = format!("User '{}' not found; Something went wrong. Exiting...", username);
-                                            ui.label(&self.err);
+                                            //ui.label(&self.err);
                                             std::process::exit(-1);
                                         }
                                     }
@@ -214,7 +247,7 @@ impl eframe::App for MyApp {
                                     let num: i32 = match self.option.trim().parse::<i32>() {
                                         Ok(n) => n,
                                         Err(_) => {
-                                            ui.label("Invalid input; please enter a number.");
+                                            self.err = "Invalid input; please enter a number.".to_string();
                                             return;
                                         }
                                     };
@@ -228,7 +261,7 @@ impl eframe::App for MyApp {
                                         }
                                         None => {
                                             self.err = format!("User '{}' not found; Something went wrong. Exiting...", username);
-                                            ui.label(&self.err);
+                                            //ui.label(&self.err);
                                             std::process::exit(-1);
                                         }
                                     }
@@ -254,7 +287,7 @@ impl eframe::App for MyApp {
                                             let hours = mins / 60.0;
                                             self.option = format!("{}", hours);
                                         } else {
-                                            ui.label("Please enter a valid number.");
+                                            self.err = "Please enter a valid number.".to_string();
                                         }
                                     }
                                 });
@@ -263,7 +296,7 @@ impl eframe::App for MyApp {
                                     let num: i32 = match self.option.trim().parse::<i32>() {
                                         Ok(n) => n,
                                         Err(_) => {
-                                            ui.label("Invalid input; please enter a number.");
+                                            self.err = "Invalid input; please enter a number.".to_string();
                                             return;
                                         }
                                     };
@@ -277,7 +310,7 @@ impl eframe::App for MyApp {
                                         }
                                         None => {
                                             self.err = format!("User '{}' not found; Something went wrong. Exiting...", username);
-                                            ui.label(&self.err);
+                                            //ui.label(&self.err);
                                             std::process::exit(-1);
                                         }
                                     }
@@ -294,7 +327,7 @@ impl eframe::App for MyApp {
                                     let num: i32 = match self.option.trim().parse::<i32>() {
                                         Ok(n) => n,
                                         Err(_) => {
-                                            ui.label("Invalid input; please enter a number.");
+                                            self.err = "Invalid input; please enter a number.".to_string();
                                             return;
                                         }
                                     };
@@ -308,7 +341,7 @@ impl eframe::App for MyApp {
                                         }
                                         None => {
                                             self.err = format!("User '{}' not found; Something went wrong. Exiting...", username);
-                                            ui.label(&self.err);
+                                            //ui.label(&self.err);
                                             std::process::exit(-1);
                                         }
                                     }
@@ -326,7 +359,7 @@ impl eframe::App for MyApp {
                                     let num: i32 = match self.option.trim().parse::<i32>() {
                                         Ok(n) => n,
                                         Err(_) => {
-                                            ui.label("Invalid input; please enter a number.");
+                                            self.err = "Invalid input; please enter a number.".to_string();
                                             return;
                                         }
                                     };
@@ -340,7 +373,7 @@ impl eframe::App for MyApp {
                                         }
                                         None => {
                                             self.err = format!("User '{}' not found; Something went wrong. Exiting...", username);
-                                            ui.label(&self.err);
+                                            //ui.label(&self.err);
                                             std::process::exit(-1);
                                         }
                                     }
@@ -357,7 +390,7 @@ impl eframe::App for MyApp {
                                     let num: i32 = match self.option.trim().parse::<i32>() {
                                         Ok(n) => n,
                                         Err(_) => {
-                                            ui.label("Invalid input; please enter a number.");
+                                            self.err = "Invalid input; please enter a number.".to_string();
                                             return;
                                         }
                                     };
@@ -371,7 +404,7 @@ impl eframe::App for MyApp {
                                         }
                                         None => {
                                             self.err = format!("User '{}' not found; Something went wrong. Exiting...", username);
-                                            ui.label(&self.err);
+                                            //ui.label(&self.err);
                                             std::process::exit(-1);
                                         }
                                     }
@@ -388,7 +421,7 @@ impl eframe::App for MyApp {
                                     let num: i32 = match self.option.trim().parse::<i32>() {
                                         Ok(n) => n,
                                         Err(_) => {
-                                            ui.label("Invalid input; please enter a number.");
+                                            self.err = "Invalid input; please enter a number.".to_string();
                                             return;
                                         }
                                     };
@@ -402,7 +435,7 @@ impl eframe::App for MyApp {
                                         }
                                         None => {
                                             self.err = format!("User '{}' not found; Something went wrong. Exiting...", username);
-                                            ui.label(&self.err);
+                                            //ui.label(&self.err);
                                             std::process::exit(-1);
                                         }
                                     }
@@ -419,7 +452,7 @@ impl eframe::App for MyApp {
                                     let num: i32 = match self.option.trim().parse::<i32>() {
                                         Ok(n) => n,
                                         Err(_) => {
-                                            ui.label("Invalid input; please enter a number.");
+                                            self.err = "Invalid input; please enter a number.".to_string();
                                             return;
                                         }
                                     };
@@ -433,7 +466,7 @@ impl eframe::App for MyApp {
                                         }
                                         None => {
                                             self.err = format!("User '{}' not found; Something went wrong. Exiting...", username);
-                                            ui.label(&self.err);
+                                            //ui.label(self.err);
                                             std::process::exit(-1);
                                         }
                                     }
@@ -450,7 +483,7 @@ impl eframe::App for MyApp {
                                     let num: i32 = match self.option.trim().parse::<i32>() {
                                         Ok(n) => n,
                                         Err(_) => {
-                                            ui.label("Invalid input; please enter a number.");
+                                            self.err = "Invalid input; please enter a number.".to_string();
                                             return;
                                         }
                                     };
@@ -464,7 +497,7 @@ impl eframe::App for MyApp {
                                         }
                                         None => {
                                             self.err = format!("User '{}' not found; Something went wrong. Exiting...", username);
-                                            ui.label(&self.err);
+                                            //ui.label(&self.err);
                                             std::process::exit(-1);
                                         }
                                     }
@@ -481,7 +514,7 @@ impl eframe::App for MyApp {
                                     let num: i32 = match self.option.trim().parse::<i32>() {
                                         Ok(n) => n,
                                         Err(_) => {
-                                            ui.label("Invalid input; please enter a number.");
+                                            self.err = "Invalid input; please enter a number.".to_string();
                                             return;
                                         }
                                     };
@@ -495,7 +528,7 @@ impl eframe::App for MyApp {
                                         }
                                         None => {
                                             self.err = format!("User '{}' not found; Something went wrong. Exiting...", username);
-                                            ui.label(&self.err);
+                                            //ui.label(&self.err);
                                             std::process::exit(-1);
                                         }
                                     }
@@ -525,13 +558,13 @@ impl eframe::App for MyApp {
                                                         "User '{}' not found; Something went wrong.",
                                                         &self.user
                                                     );
-                                                    ui.label(&self.err);
+                                                    //ui.label(&self.err);
                                                     std::process::exit(-1);
                                                 }
                                             }
                                         }
                                         Err(_) => {
-                                            ui.label("Invalid input: Please enter a valid number.");
+                                            self.err = "Invalid input; please enter a number.".to_string();
                                         }
                                     }
                                 }
@@ -551,13 +584,13 @@ impl eframe::App for MyApp {
                                                         "User '{}' not found; Something went wrong. Exiting...",
                                                         &self.user
                                                     );
-                                                    ui.label(&self.err);
+                                                    //ui.label(&self.err);
                                                     std::process::exit(-1);
                                                 }
                                             }
                                         }
                                         Err(_) => {
-                                            ui.label("Invalid input: Please enter a valid number.");
+                                            self.err = "Invalid input; please enter a number.".to_string();
                                         }
                                     }
                                 }
@@ -577,20 +610,26 @@ impl eframe::App for MyApp {
                                                         "User '{}' not found; Something went wrong. Exiting...",
                                                         &self.user
                                                     );
-                                                    ui.label(&self.err);
+                                                    //ui.label(&self.err);
                                                     std::process::exit(-1);
                                                 }
                                             }
                                         }
                                         Err(_) => {
-                                            ui.label("Invalid input: Please enter a valid number.");
+                                            self.err = "Invalid input; please enter a number.".to_string();
                                         }
                                     }
                                 }
                             });
                         }
 
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
+                            if ui.button("Close").clicked() {self.goober_pop = false; /*self.dg = String::new();*/}
+                        });
+
+                        ui.label(&self.pointsgoober);
                         ui.label(&self.given);
+                        ui.label(&self.errs);
                     });
             }
 
@@ -631,7 +670,7 @@ impl eframe::App for MyApp {
                                     let num: i32 = match self.option.trim().parse::<i32>() {
                                         Ok(n) => n,
                                         Err(_) => {
-                                            ui.label("Invalid input; please enter a number.");
+                                            self.err = "Invalid input; please enter a number.".to_string();
                                             return;
                                         }
                                     };
@@ -645,7 +684,7 @@ impl eframe::App for MyApp {
                                         }
                                         None => {
                                             self.err = format!("User '{}' not found; Something went wrong. Exiting...", username);
-                                            ui.label(&self.errs);
+                                            //ui.label(&self.errs);
                                             std::process::exit(-1);
                                         }
                                     }
@@ -662,7 +701,7 @@ impl eframe::App for MyApp {
                                     let num: i32 = match self.option.trim().parse::<i32>() {
                                         Ok(n) => n,
                                         Err(_) => {
-                                            ui.label("Invalid input; please enter a number.");
+                                            self.err = "Invalid input; please enter a number.".to_string();
                                             return;
                                         }
                                     };
@@ -676,7 +715,7 @@ impl eframe::App for MyApp {
                                         }
                                         None => {
                                             self.err = format!("User '{}' not found; Something went wrong. Exiting...", username);
-                                            ui.label(&self.err);
+                                            //ui.label(&self.err);
                                             std::process::exit(-1);
                                         }
                                     }
@@ -693,7 +732,7 @@ impl eframe::App for MyApp {
                                     let num: i32 = match self.option.trim().parse::<i32>() {
                                         Ok(n) => n,
                                         Err(_) => {
-                                            ui.label("Invalid input; please enter a number.");
+                                            self.err = "Invalid input; please enter a number.".to_string();
                                             return;
                                         }
                                     };
@@ -708,7 +747,7 @@ impl eframe::App for MyApp {
                                         }
                                         None => {
                                             self.err = format!("User '{}' not found; Something went wrong. Exiting...", username);
-                                            ui.label(&self.err);
+                                            //ui.label(&self.err);
                                             std::process::exit(-1);
                                         }
                                     }
@@ -734,7 +773,7 @@ impl eframe::App for MyApp {
                                             let hours = mins.round() as i32;
                                             self.option = format!("{}", hours);
                                         } else {
-                                            ui.label("Please enter a valid number.");
+                                            self.err = "Please enter a valid number.".to_string();
                                         }
                                     }
                                 });
@@ -743,7 +782,7 @@ impl eframe::App for MyApp {
                                     let num: f64 = match self.option.trim().parse::<f64>() {
                                         Ok(n) => n,
                                         Err(_) => {
-                                            ui.label("Invalid input; please enter a number.");
+                                            self.err = "Invalid input; please enter a number.".to_string();
                                             return;
                                         }
                                     };
@@ -762,7 +801,7 @@ impl eframe::App for MyApp {
                                         }
                                         None => {
                                             self.err = format!("User '{}' not found; Something went wrong. Exiting...", username);
-                                            ui.label(&self.err);
+                                            //ui.label(&self.err);
                                             std::process::exit(-1);
                                         }
                                     }
@@ -779,7 +818,7 @@ impl eframe::App for MyApp {
                                     let num: i32 = match self.option.trim().parse::<i32>() {
                                         Ok(n) => n,
                                         Err(_) => {
-                                            ui.label("Invalid input; please enter a number.");
+                                            self.err = "Invalid input; please enter a number.".to_string();
                                             return;
                                         }
                                     };
@@ -793,7 +832,7 @@ impl eframe::App for MyApp {
                                         }
                                         None => {
                                             self.err = format!("User '{}' not found; Something went wrong. Exiting...", username);
-                                            ui.label(&self.err);
+                                            //ui.label(&self.err);
                                             std::process::exit(-1);
                                         }
                                     }
@@ -811,7 +850,7 @@ impl eframe::App for MyApp {
                                     let num: i32 = match self.option.trim().parse::<i32>() {
                                         Ok(n) => n,
                                         Err(_) => {
-                                            ui.label("Invalid input; please enter a number.");
+                                            self.err = "Invalid input; please enter a number.".to_string();
                                             return;
                                         }
                                     };
@@ -826,7 +865,7 @@ impl eframe::App for MyApp {
                                         }
                                         None => {
                                             self.err = format!("User '{}' not found; Something went wrong. Exiting...", username);
-                                            ui.label(&self.err);
+                                            //ui.label(&self.err);
                                             std::process::exit(-1);
                                         }
                                     }
@@ -852,7 +891,7 @@ impl eframe::App for MyApp {
                                             let hours = mins.round() as i32;
                                             self.option = format!("{}", hours);
                                         } else {
-                                            ui.label("Please enter a valid number.");
+                                            self.err = "Please enter a valid number.".to_string();
                                         }
                                     }
                                 });
@@ -861,7 +900,7 @@ impl eframe::App for MyApp {
                                     let num: f64 = match self.option.trim().parse::<f64>() {
                                         Ok(n) => n,
                                         Err(_) => {
-                                            ui.label("Invalid input; please enter a number.");
+                                            self.err = "Invalid input; please enter a number.".to_string();
                                             return;
                                         }
                                     };
@@ -880,7 +919,7 @@ impl eframe::App for MyApp {
                                         }
                                         None => {
                                             self.err = format!("User '{}' not found; Something went wrong. Exiting...", username);
-                                            ui.label(&self.err);
+                                            //ui.label(&self.err);
                                             std::process::exit(-1);
                                         }
                                     }
@@ -897,7 +936,7 @@ impl eframe::App for MyApp {
                                     let num: i32 = match self.option.trim().parse::<i32>() {
                                         Ok(n) => n,
                                         Err(_) => {
-                                            ui.label("Invalid input; please enter a number.");
+                                            self.err = "Invalid input; please enter a number.".to_string();
                                             return;
                                         }
                                     };
@@ -911,7 +950,7 @@ impl eframe::App for MyApp {
                                         }
                                         None => {
                                             self.err = format!("User '{}' not found; Something went wrong. Exiting...", username);
-                                            ui.label(&self.err);
+                                            //ui.label(&self.err);
                                             std::process::exit(-1);
                                         }
                                     }
@@ -928,7 +967,7 @@ impl eframe::App for MyApp {
                                     let num: i32 = match self.option.trim().parse::<i32>() {
                                         Ok(n) => n,
                                         Err(_) => {
-                                            ui.label("Invalid input; please enter a number.");
+                                            self.err = "Invalid input; please enter a number.".to_string();
                                             return;
                                         }
                                     };
@@ -942,7 +981,7 @@ impl eframe::App for MyApp {
                                         }
                                         None => {
                                             self.err = format!("User '{}' not found; Something went wrong. Exiting...", username);
-                                            ui.label(&self.err);
+                                            //ui.label(&self.err);
                                             std::process::exit(-1);
                                         }
                                     }
@@ -959,7 +998,7 @@ impl eframe::App for MyApp {
                                     let num: i32 = match self.option.trim().parse::<i32>() {
                                         Ok(n) => n,
                                         Err(_) => {
-                                            ui.label("Invalid input; please enter a number.");
+                                            self.err = "Invalid input; please enter a number.".to_string();
                                             return;
                                         }
                                     };
@@ -973,7 +1012,7 @@ impl eframe::App for MyApp {
                                         }
                                         None => {
                                             self.err = format!("User '{}' not found; Something went wrong. Exiting...", username);
-                                            ui.label(&self.err);
+                                            //ui.label(&self.err);
                                             std::process::exit(-1);
                                         }
                                     }
@@ -990,7 +1029,7 @@ impl eframe::App for MyApp {
                                     let num: i32 = match self.option.trim().parse::<i32>() {
                                         Ok(n) => n,
                                         Err(_) => {
-                                            ui.label("Invalid input; please enter a number.");
+                                            self.err = "Invalid input; please enter a number.".to_string();
                                             return;
                                         }
                                     };
@@ -1004,7 +1043,6 @@ impl eframe::App for MyApp {
                                         }
                                         None => {
                                             self.err = format!("User '{}' not found; Something went wrong. Exiting...", username);
-                                            ui.label(&self.err);
                                             std::process::exit(-1);
                                         }
                                     }
@@ -1034,13 +1072,13 @@ impl eframe::App for MyApp {
                                                         "User '{}' not found; Something went wrong.",
                                                         &self.user
                                                     );
-                                                    ui.label(&self.err);
+                                                    //ui.label(&self.err);
                                                     std::process::exit(-1);
                                                 }
                                             }
                                         }
                                         Err(_) => {
-                                            ui.label("Invalid input: Please enter a valid number.");
+                                            self.err = "Invalid input: Please enter a valid number.".to_string();
                                         }
                                     }
                                 }
@@ -1060,13 +1098,13 @@ impl eframe::App for MyApp {
                                                         "User '{}' not found; Something went wrong. Exiting...",
                                                         &self.user
                                                     );
-                                                    ui.label(&self.err);
+                                                    //ui.label(&self.err);
                                                     std::process::exit(-1);
                                                 }
                                             }
                                         }
                                         Err(_) => {
-                                            ui.label("Invalid input: Please enter a valid number.");
+                                            self.err = "Invalid input: Please enter a valid number.".to_string();
                                         }
                                     }
                                 }
@@ -1086,20 +1124,26 @@ impl eframe::App for MyApp {
                                                         "User '{}' not found; Something went wrong. Exiting...",
                                                         &self.user
                                                     );
-                                                    ui.label(&self.err);
+                                                    //ui.label(&self.err);
                                                     std::process::exit(-1);
                                                 }
                                             }
                                         }
                                         Err(_) => {
-                                            ui.label("Invalid input: Please enter a valid number.");
+                                            self.err = "Invalid input: Please enter a valid number.".to_string();
                                         }
                                     }
                                 }
                             });
                         }
-                        
+
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
+                            if ui.button("Close").clicked() {self.duck_pop = false; /*self.dg = String::new();*/}
+                        });
+
+                        ui.label(&self.pointsduck);
                         ui.label(&self.given);
+                        ui.label(&self.errs);
                     });
             }
         });
