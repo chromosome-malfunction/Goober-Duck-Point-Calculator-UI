@@ -46,6 +46,7 @@ struct MyApp {
     points: String,
     pointsgoober: String,
     pointsduck: String,
+    
 }
 
 impl eframe::App for MyApp {
@@ -63,15 +64,11 @@ impl eframe::App for MyApp {
                 ui.checkbox(&mut self.light_mode, "light mode");
             });
 
-            /*ui.with_layout(egui::Layout::right_to_left(egui::Align::BOTTOM), |ui| {
-                if ui.button("Close App").clicked() {std::process::exit(0);} else {}
-            });*/
-            
             ui.heading("Point calculator");
 
             ui.label("Enter username:");
             ui.text_edit_singleline(&mut self.user);
-
+            
             let user = (|| -> bool {
                 if self.user.to_lowercase().chars().count() < 2 || self.user.to_lowercase().chars().count() > 32 {
                     ui.label("Username must be at least 2 characters long or shorter than 32 characters.");
@@ -1146,6 +1143,12 @@ impl eframe::App for MyApp {
                         ui.label(&self.errs);
                     });
             }
+
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::BOTTOM), |ui| {
+                if ui.button("Close App").clicked() {
+                    std::process::exit(0);
+                } else {}
+            });
         });
     }
 }
