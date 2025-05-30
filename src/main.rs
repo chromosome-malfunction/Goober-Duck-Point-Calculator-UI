@@ -1036,7 +1036,7 @@ impl eframe::App for MyApp {
                                     match self.maps.duckmap.get_mut(&username) {
                                         Some(value) => {
                                             numb = 1 * num;
-                                            *value -= numb;
+                                            *value += numb;
                                         }
                                         None => {
                                             self.err = format!("User '{}' not found; Something went wrong. Exiting...", username);
