@@ -32,6 +32,7 @@ struct MyApp {
     dg: String,
     goober_pop: bool,
     duck_pop: bool,
+    warning_pop: bool,
     goobercheck: bool,
     duckcheck: bool,
     gooberoption: String,
@@ -63,8 +64,18 @@ impl eframe::App for MyApp {
             ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
                 ui.checkbox(&mut self.light_mode, "light mode");
             });
-
-            ui.heading("Point calculator");
+            
+            if !self.warning_pop {
+            egui::Window::new("Warning").default_size(egui::Vec2::new(600.0, 400.0))
+                .show(ctx, |ui| {
+                    if ui.button("This program may have point errors, please use with caution. \n Click this button to close.").clicked() {
+                        self.warning_pop = true;
+                    }
+                });
+                return;
+            }
+            
+                    ui.heading("Point calculator");
 
             ui.label("Enter username:");
             ui.text_edit_singleline(&mut self.user);
@@ -789,7 +800,7 @@ impl eframe::App for MyApp {
                                     match self.maps.duckmap.get_mut(&username) {
                                         Some(value) => {
                                             if self.option2 == "Hours" {
-                                                numb = (10f64 * num) as i32;
+                                                numb = (10.0 * num) as i32;
                                                 *value += numb;
                                             } else if self.option2 == "Minutes" {
                                                 numb = (0.1667 * num).round() as i32;
@@ -907,7 +918,7 @@ impl eframe::App for MyApp {
                                     match self.maps.duckmap.get_mut(&username) {
                                         Some(value) => {
                                             if self.option2 == "Hours" {
-                                                numb = (10.0 * num) as i32;
+                                                numb = (15.0 * num) as i32;
                                                 *value += numb;
                                             } else if self.option2 == "Minutes" {
                                                 numb = (0.25 * num).round() as i32;
